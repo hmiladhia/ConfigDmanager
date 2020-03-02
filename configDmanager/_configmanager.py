@@ -5,7 +5,7 @@ import sys
 from itertools import chain
 from pathlib import Path
 
-from Utils.configmanager import Config
+from configDmanager import Config
 
 
 class ConfigManager:
