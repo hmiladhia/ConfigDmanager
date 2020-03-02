@@ -115,6 +115,8 @@ class Config(MutableMapping):
     def __parse_value(cls, value, name=None):
         if type(value) == dict:
             return Config(value, name=name)
+        elif type(value) == Config:
+            return value
         elif not (isinstance(value, str)) and hasattr(value, '__iter__'):
             return [cls.__parse_value(p) for p in value]
         return value

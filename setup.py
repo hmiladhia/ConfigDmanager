@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="ConfigDmanager",
-    version="0.0.1",
+    version="0.0.2",
     author="Dhia Hmila",
     author_email="hmiladhia@hotmail.fr",
     description="A simple configuration files manager package",
