@@ -2,6 +2,8 @@
 *.pyc
 *.local.*
 
+tests/*
+
 #Ignore thumbnails created by Windows
 Thumbs.db
 #Ignore files built by Visual Studio
@@ -31,9 +33,8 @@ obj/
 _ReSharper*/
 [Tt]est[Rr]esult*
 .vs/
-#Nuget packages folder
+# packages folder
 packages/
-/configs/*
 /build/*
 /ConfigDmanager.egg-info/*
 /dist/*
