@@ -34,3 +34,6 @@ _ReSharper*/
 #Nuget packages folder
 packages/
 /configs/*
+/build/*
+/ConfigDmanager.egg-info/*
+/dist/*
