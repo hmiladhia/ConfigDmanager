@@ -6,6 +6,7 @@ from itertools import chain
 from pathlib import Path
 
 from configDmanager import Config
+from configDmanager.errors import ConfigNotFoundError
 
 
 class ConfigManager:
@@ -50,18 +51,19 @@ class ConfigManager:
 
     @classmethod
     def __config_import(cls, name, path, level=0):
-        base, _, name = name.rpartition('.')
+        cls.__sanity_check(name, path, level)
+        base, _, name_base = name.rpartition('.')
         base = base.replace('.', '/')
-        for path in chain([path], sys.path):
+        for c_path in chain([path], sys.path):
             try:
-                if path:
-                    cls.__sanity_check(name, path, level)
-                    path = Path(path)
-                    path = (path.parent if level == 2 else path) / base
-                    return cls.__load_config(name, path)
+                if c_path:
+                    cls.__sanity_check(name, c_path, level)
+                    c_path = Path(c_path)
+                    c_path = (c_path.parent if level == 2 else c_path) / base
+                    return cls.__load_config(name_base, c_path)
             except FileNotFoundError:
                 pass
-        raise FileNotFoundError
+        raise ConfigNotFoundError(name, path)
 
     @staticmethod
     def __sanity_check(name, path, level):

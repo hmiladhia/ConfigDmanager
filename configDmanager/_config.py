@@ -39,7 +39,7 @@ class Config(MutableMapping):
             for groupNum in range(0, len(match.groups())):
                 try:
                     value = self[match.group(1)]
-                except KeyError as e:
+                except KeyError:
                     if match.group(1).startswith('os_environ'):
                         value = match.group(0)
                     else:
@@ -85,17 +85,25 @@ class Config(MutableMapping):
     def __get_single_item(self, sub_attributes):
         value = self.__get_raw_single_item(sub_attributes)
         if isinstance(value, str):
-            try:
-                value = self.format_string(value)
-            except RecursionError:
-                raise ReinterpretationError(sub_attributes, value, 'Due to cycle - RecursionError')
-            except KeyError as e:
-                raise ReinterpretationError(sub_attributes, value, f"Could not find param {e} in FstringConfig")
+            value = self.__reinterpret_single_item(sub_attributes, value)
+        return value
 
-            try:
-                value = value.format(os_environ=environ)
-            except KeyError as e:
-                raise ReinterpretationError(sub_attributes, value, f'Could not find {e} in Environment variables')
+    def __reinterpret_single_item(self, sub_attributes, value):
+        try:
+            value = self.format_string(value)
+        except RecursionError:
+            raise ReinterpretationError(sub_attributes, value, 'Due to cycle - RecursionError', RecursionError)
+        except KeyError as e:
+            raise ReinterpretationError(sub_attributes, value,
+                                        f"Could not find param {e} in FstringConfig", KeyError)
+        except FileNotFoundError as e:
+            raise ReinterpretationError(sub_attributes, value, e, FileNotFoundError)
+
+        try:
+            value = value.format(os_environ=environ)
+        except KeyError as e:
+            raise ReinterpretationError(sub_attributes, value,
+                                        f'Could not find {e} in Environment variables', KeyError)
         return value
 
     def __get_raw_single_item(self, sub_attributes):
