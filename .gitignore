@@ -2,8 +2,6 @@
 *.pyc
 *.local.*
 
-tests/*
-
 #Ignore thumbnails created by Windows
 Thumbs.db
 #Ignore files built by Visual Studio
@@ -38,3 +36,4 @@ packages/
 /build/*
 /ConfigDmanager.egg-info/*
 /dist/*
+/tests/configs/*.py

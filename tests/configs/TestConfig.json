@@ -1,0 +1,7 @@
+{
+  "__name": "TestConfig",
+  "__parent": "GmailConfig",
+  "mail_server": "smtp.google.com",
+  "mail_port": 587,
+  "user_info": {"user": "RandomName", "pass": "mdp"}
+}

@@ -1,0 +1,11 @@
+{
+  "__name": "FstringConfig",
+  "__parent": "configs.TestConfig",
+   "mail": "{user_info.user}@gmail.com",
+   "password": "{os_environ[pass]}",
+   "mypassword": "{os_environ[password]}",
+   "my_other_password": "{passwor}",
+   "my_final_password": "{password} {os_environ[pass]}",
+   "value1" : "{value2}",
+   "value2" : "{value1}"
+}
