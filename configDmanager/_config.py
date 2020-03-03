@@ -4,10 +4,11 @@ from os import environ
 from collections.abc import MutableMapping
 
 from configDmanager.errors import ReinterpretationError
+from configDmanager._format import FileReader
 
 
 class Config(MutableMapping):
-    def __init__(self, config_dict: dict, parent: 'Config' = None, name: str = None):
+    def __init__(self, config_dict: dict, parent: 'Config' = None, name: str = None, path=None):
         self.__config_dict = dict()
         self.__parent = parent
         self.__load_config_dict(config_dict)
@@ -15,6 +16,7 @@ class Config(MutableMapping):
             self.set_value('__name', name)
         else:
             self.__name = None
+        self.__file_reader = FileReader(path)
 
     def get_name(self):
         return self.__name
@@ -40,7 +42,7 @@ class Config(MutableMapping):
                 try:
                     value = self[match.group(1)]
                 except KeyError:
-                    if match.group(1).startswith('os_environ'):
+                    if match.group(1).startswith('os_environ') or match.group(1).startswith('read_file'):
                         value = match.group(0)
                     else:
                         raise KeyError(match.group(1))
@@ -100,10 +102,12 @@ class Config(MutableMapping):
             raise ReinterpretationError(sub_attributes, value, e, FileNotFoundError)
 
         try:
-            value = value.format(os_environ=environ)
+            value = value.format(os_environ=environ, read_file=self.__file_reader)
         except KeyError as e:
             raise ReinterpretationError(sub_attributes, value,
                                         f'Could not find {e} in Environment variables', KeyError)
+        except FileNotFoundError as e:
+            raise ReinterpretationError(sub_attributes, value, e, FileNotFoundError)
         return value
 
     def __get_raw_single_item(self, sub_attributes):

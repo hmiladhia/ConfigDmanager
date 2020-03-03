@@ -34,7 +34,7 @@ class ConfigManager:
     def __load_config(cls, config_name, path):
         config_dict = cls.__read_config_file(config_name, path)
         parent_config = cls.__load_parent_config(config_dict, path)
-        return Config(config_dict, parent_config, config_name)
+        return Config(config_dict, parent_config, config_name, path)
 
     @classmethod
     def __read_config_file(cls, config_name, path):

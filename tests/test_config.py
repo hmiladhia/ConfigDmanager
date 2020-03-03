@@ -126,3 +126,25 @@ def test_attribute_access_error_message():
         fstring_conf.po
     assert str(context.value) == "'Config' object has no attribute 'po'"
 
+
+def test_file_integration_path_relative_to_cwd():
+    result = fstring_conf.text2
+    assert result.startswith("Cum saepe multa, tum memini domi in hemicyclio sedentem,")
+    with open('long_text.txt', 'r') as file:
+        expected = file.read()
+    assert result == expected
+
+
+def test_file_integration_path_relative_to_config():
+    result = fstring_conf.text
+    assert result.startswith("Cum saepe multa, tum memini domi in hemicyclio sedentem,")
+    with open('long_text.txt', 'r') as file:
+        expected = file.read()
+    assert result == expected
+
+
+def test_file_integration_error():
+    with pytest.raises(ReinterpretationError) as context:
+        fstring_conf.text3
+    print(context.value)
+    assert str(context.value) == "Param (text3: {read_file[missing.txt]}) reinterpretation failed: [Errno 2] No such file or directory: 'missing.txt'"
