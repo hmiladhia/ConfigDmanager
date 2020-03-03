@@ -5,12 +5,21 @@ from abc import ABC
 
 class TypeBase(ABC):
     @classmethod
-    def import_config(cls, file_path, *args, **kwargs):
+    def import_config(cls, config_file, *args, **kwargs):
         pass
 
     @classmethod
-    def export_config(cls, config, file_path, *args, **kwargs):
+    def export_config(cls, config_dict, file_path, *args, **kwargs):
         pass
+
+    @classmethod
+    def is_readable(cls, file_path):
+        try:
+            with open(file_path, 'r') as config_file:
+                cls.import_config(config_file)
+        except:
+            return False
+        return True
 
 
 class JsonType(TypeBase):
