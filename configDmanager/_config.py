@@ -1,5 +1,4 @@
 import re
-import warnings
 
 from os import environ
 from collections.abc import MutableMapping
@@ -12,6 +11,8 @@ class Config(MutableMapping):
         self.__load_config_dict(config_dict)
         if name:
             self.set_value('__name', name)
+        else:
+            self.__name = None
 
     def get_name(self):
         return self.__name
@@ -52,7 +53,7 @@ class Config(MutableMapping):
         try:
             return self[item]
         except KeyError:
-            raise AttributeError
+            self.__getattribute__(item)
 
     def __setattr__(self, key, value):
         if not key.startswith(self.__private_prefix):
@@ -68,10 +69,13 @@ class Config(MutableMapping):
 
         try:
             return self.__get_single_item(k)
-        except KeyError:
+        except KeyError as e:
             if self.__parent:
-                return self.__parent.__get_single_item(k)
-            raise KeyError
+                try:
+                    return self.__parent.__get_single_item(k)
+                except KeyError:
+                    pass
+            raise KeyError(f'Could not find param {e} in {self.__name if self.__name else "config"}')
 
     def __get_single_item(self, sub_attributes):
         value = self.__get_raw_single_item(sub_attributes)
@@ -79,9 +83,9 @@ class Config(MutableMapping):
             try:
                 value = self.format_string(value).format(os_environ=environ)
             except RecursionError:
-                warnings.warn('Two config entries are calling each other: the raw value was used')
-            except KeyError:
-                warnings.warn('Key not found: the raw value was used')
+                raise RecursionError(f'Param ({sub_attributes}: {value}) reinterpretation failed due to cycle')
+            except KeyError as e:
+                raise KeyError(f'Could not find param {e} in {self.__name if self.__name else "config"}')
         return value
 
     def __get_raw_single_item(self, sub_attributes):
