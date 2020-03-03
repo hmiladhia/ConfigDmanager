@@ -3,6 +3,8 @@ import re
 from os import environ
 from collections.abc import MutableMapping
 
+from configDmanager.errors import ReinterpretationError
+
 
 class Config(MutableMapping):
     def __init__(self, config_dict: dict, parent: 'Config' = None, name: str = None):
@@ -37,8 +39,11 @@ class Config(MutableMapping):
             for groupNum in range(0, len(match.groups())):
                 try:
                     value = self[match.group(1)]
-                except KeyError:
-                    value = match.group(0)
+                except KeyError as e:
+                    if match.group(1).startswith('os_environ'):
+                        value = match.group(0)
+                    else:
+                        raise KeyError(match.group(1))
                 text = re.sub(match.group(0), value, text)
         return text
 
@@ -81,11 +86,16 @@ class Config(MutableMapping):
         value = self.__get_raw_single_item(sub_attributes)
         if isinstance(value, str):
             try:
-                value = self.format_string(value).format(os_environ=environ)
+                value = self.format_string(value)
             except RecursionError:
-                raise RecursionError(f'Param ({sub_attributes}: {value}) reinterpretation failed due to cycle')
+                raise ReinterpretationError(sub_attributes, value, 'Due to cycle - RecursionError')
             except KeyError as e:
-                raise KeyError(f'Could not find param {e} in {self.__name if self.__name else "config"}')
+                raise ReinterpretationError(sub_attributes, value, f"Could not find param {e} in FstringConfig")
+
+            try:
+                value = value.format(os_environ=environ)
+            except KeyError as e:
+                raise ReinterpretationError(sub_attributes, value, f'Could not find {e} in Environment variables')
         return value
 
     def __get_raw_single_item(self, sub_attributes):
