@@ -4,6 +4,7 @@
   "author": "Dhia Hmila",
   "author_email": "hmiladhia@hotmail.fr",
   "description": "A simple configuration files manager package",
+  "long_description": "{read_file[README.md]}",
   "long_description_content_type": "text/markdown",
   "url": "https://github.com/hmiladhia/ConfigDmanager",
   "packages": ["configDmanager"],
