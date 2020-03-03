@@ -2,7 +2,7 @@ import re
 import warnings
 
 from os import environ
-from collections import MutableMapping
+from collections.abc import MutableMapping
 
 
 class Config(MutableMapping):
