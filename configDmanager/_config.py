@@ -8,14 +8,21 @@ from configDmanager._format import FileReader
 
 
 class Config(MutableMapping):
-    def __init__(self, config_dict: dict, parent: 'Config' = None, name: str = None, path=None):
+    def __init__(self, config_dict: dict, parent: 'Config' = None, name: str = None, path=None, type_=None):
         self.__config_dict = dict()
         self.__parent = parent
         self.__load_config_dict(config_dict)
+
+        # Meta data
         if name:
             self.set_value('__name', name)
         else:
             self.__name = None
+
+        if type_:
+            self.set_value('__type', type_)
+
+        # Format Executors
         self.__file_reader = FileReader(path)
 
     def get_name(self):
