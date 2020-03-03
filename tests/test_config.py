@@ -6,6 +6,7 @@ from configDmanager.errors import ReinterpretationError
 
 conf = import_config('configs.TestConfig')
 fstring_conf = import_config('configs.FstringConfig')
+yaml_conf = import_config('configs.YamlConfig')
 
 
 def test_param_as_attribute():
@@ -146,5 +147,8 @@ def test_file_integration_path_relative_to_config():
 def test_file_integration_error():
     with pytest.raises(ReinterpretationError) as context:
         fstring_conf.text3
-    print(context.value)
     assert str(context.value) == "Param (text3: {read_file[missing.txt]}) reinterpretation failed: [Errno 2] No such file or directory: 'missing.txt'"
+
+
+def test_yaml_subclass():
+    assert yaml_conf.subconfig.param1 == 'value1'

@@ -1,0 +1,15 @@
+__name: FstringConfig
+__parent: TestConfig
+mail: '{user_info.user}@gmail.com'
+my_final_password: '{password} {os_environ[pass]}'
+my_other_password: '{passwor}'
+mypassword: '{os_environ[password]}'
+password: '{os_environ[pass]}'
+text: '{read_file[../long_text.txt]}'
+text2: '{read_file[long_text.txt]}'
+text3: '{read_file[missing.txt]}'
+value1: '{value2}'
+value2: '{value1}'
+subconfig:
+    'param1': 'value1'
+    'param2': 'value2'

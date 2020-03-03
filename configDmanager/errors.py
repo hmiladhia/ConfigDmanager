@@ -22,7 +22,7 @@ class ConfigManagerError(Error):
 
 class ConfigNotFoundError(ConfigManagerError):
     def __init__(self, config_name, config_path=None):
-        self.message = f"{config_name} Not Found{' in '+config_path if config_path else ''}"
+        self.message = f"{config_name} Not Found{' in ' + str(config_path) if config_path else ''}"
 
     def __str__(self):
         return self.message

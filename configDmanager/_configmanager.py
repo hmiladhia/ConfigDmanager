@@ -6,11 +6,12 @@ from pathlib import Path
 
 from configDmanager import Config
 from configDmanager.errors import ConfigNotFoundError, ConfigManagerError
-from configDmanager.config_types import JsonType
+from configDmanager.config_types import JsonType, YamlType
 
 
 class ConfigManager:
-    supported_types = {'json': JsonType}
+    supported_types = {'json': JsonType,
+                       'yaml': YamlType}
     default_export_type = 'json'
     @classmethod
     def import_config(cls, name, path=None, type_=None):
@@ -36,8 +37,9 @@ class ConfigManager:
 
     @classmethod
     def __load_config(cls, config_name, path, type_=None):
+        # todo implement type_ as a list that features all parents types
         config_dict = cls.__read_config_file(config_name, path, type_)
-        parent_config = cls.__load_parent_config(config_dict, path, type_)
+        parent_config = cls.__load_parent_config(config_dict, path)
         return Config(config_dict, parent_config, config_name, path, type_)
 
     @classmethod
@@ -75,6 +77,8 @@ class ConfigManager:
     def __get_config_path_and_type(cls, config_name, path, type_=None):
         if type_ is None:
             type_, ext = cls.__detect_type(config_name, path)
+        else:
+            ext = type_
         return cls.__get_config_path(config_name, path, ext), type_
 
     @classmethod
