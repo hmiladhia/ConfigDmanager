@@ -79,7 +79,7 @@ class ConfigManager:
             type_, ext = cls.__detect_type(config_name, path)
         else:
             ext = type_
-        return cls.__get_config_path(config_name, path, ext), type_
+        return cls.__get_config_path(config_name, path, ext), type_.lower()
 
     @classmethod
     def __detect_type(cls, config_name, path):

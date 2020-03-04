@@ -4,8 +4,21 @@ from configDmanager import import_config, Config
 from configDmanager.errors import ConfigNotFoundError, ConfigManagerError
 
 
-def test_import_config_json():
-    assert type(import_config('configs.FstringConfig', type_='json')) == Config
+@pytest.mark.parametrize('config_name, type_', [
+    ('configs.FstringConfig', 'json'),
+    ('configs.YamlConfig', 'yaml'),
+    ('configs.YamlConfig', 'YAML'),
+])
+def test_import_config(config_name, type_):
+    assert type(import_config(config_name, type_=type_)) == Config
+
+
+@pytest.mark.parametrize('config_name', [
+    'configs.YamlConfig',
+    'configs.FstringConfig'
+])
+def test_automatic_import_detection(config_name):
+    assert type(import_config(config_name)) == Config
 
 
 def test_import_error():
@@ -20,13 +33,3 @@ def test_import_error_unsupportedtype():
     assert str(context.value) == 'Could not auto-detect type of Config: UnsupportedConfig'
 
 
-def test_import_yaml():
-    assert type(import_config('configs.YamlConfig', type_='yaml')) == Config
-
-
-def test_automatic_import_detection_yaml():
-    assert type(import_config('configs.YamlConfig')) == Config
-
-
-def test_automatic_import_detection_json():
-    assert type(import_config('configs.FstringConfig')) == Config
