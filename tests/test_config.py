@@ -48,12 +48,14 @@ def test_dict_as_key(conf):
     assert get_params(**conf[{'mail_server': 'mail_server', 'mail_use_tls': 'tls'}]) in expected
 
 
-def test_iterable_as_key(conf):
+@pytest.mark.parametrize('keys', [
+    {'mail_server', 'mail_use_tls'},
+    ['mail_server', 'mail_use_tls'],
+    ('mail_server', 'mail_use_tls')])
+def test_iterable_as_key(keys, conf):
     expected = {"{'mail_server': 'smtp.google.com', 'mail_use_tls': True}",
                 "{'mail_use_tls': True, 'mail_server': 'smtp.google.com'}"}
-    assert get_params(**conf[{'mail_server', 'mail_use_tls'}]) in expected
-    assert get_params(**conf[['mail_server', 'mail_use_tls']]) in expected
-    assert get_params(**conf[('mail_server', 'mail_use_tls')]) in expected
+    assert get_params(**conf[keys]) in expected
 
 
 def test_param_add_as_attr(conf):
@@ -114,22 +116,19 @@ def test_fstrings_recursion_error(fstring_conf):
     assert str(context.value) in expected
 
 
-def test_key_access_error_message(fstring_conf):
-    with pytest.raises(KeyError) as context:
-        fstring_conf['po']
-    assert str(context.value) == "\"Could not find param 'po' in FstringConfig\""
-
-
-def test_environ_access_error_message(fstring_conf):
-    with pytest.raises(ReinterpretationError) as context:
-        fstring_conf['mypassword']
-    assert str(context.value) == "Param (mypassword: {os_environ[password]}) reinterpretation failed: Could not find 'password' in Environment variables"
-
-
-def test_reinterpretation_key_access_error_message(fstring_conf):
-    with pytest.raises(ReinterpretationError) as context:
-        fstring_conf['my_other_password']
-    assert str(context.value) == "Param (my_other_password: {passwor}) reinterpretation failed: Could not find param 'passwor' in FstringConfig"
+# noinspection PyStatementEffect
+@pytest.mark.parametrize("key, error_type, error_msg", [
+    ('po', KeyError, "\"Could not find param 'po' in FstringConfig\""),  # test missing param error
+    ('mypassword', ReinterpretationError, "Param (mypassword: "  # test missing environment param error
+     "{os_environ[password]}) reinterpretation failed: Could not find 'password' in Environment variables"),
+    ('my_other_password', ReinterpretationError,  # test missing param for reinpretation error
+     "Param (my_other_password: {passwor}) reinterpretation failed: Could not find param 'passwor' in FstringConfig"),
+    ('text3', ReinterpretationError, "Param (text3: {read_file[missing.txt]}) reinterpretation failed: [Errno 2] No "
+                                     "such file or directory: 'missing.txt'")])  # test file integration error
+def test_access_error_message(key, error_type, error_msg, fstring_conf):
+    with pytest.raises(error_type) as context:
+        fstring_conf[key]
+    assert str(context.value) == error_msg
 
 
 def test_attribute_access_error_message(fstring_conf):
@@ -138,26 +137,16 @@ def test_attribute_access_error_message(fstring_conf):
     assert str(context.value) == "'Config' object has no attribute 'po'"
 
 
-def test_file_integration_path_relative_to_cwd(fstring_conf):
-    result = fstring_conf.text2
+@pytest.mark.parametrize('text_key', [
+    'text2',  # test_path_relative_to_cwd
+    'text'    # test_relative_to_config
+])
+def test_file_integration(text_key, fstring_conf):
+    result = fstring_conf[text_key]
     assert result.startswith("Cum saepe multa, tum memini domi in hemicyclio sedentem,")
     with open('long_text.txt', 'r') as file:
         expected = file.read()
     assert result == expected
-
-
-def test_file_integration_path_relative_to_config(fstring_conf):
-    result = fstring_conf.text
-    assert result.startswith("Cum saepe multa, tum memini domi in hemicyclio sedentem,")
-    with open('long_text.txt', 'r') as file:
-        expected = file.read()
-    assert result == expected
-
-
-def test_file_integration_error(fstring_conf):
-    with pytest.raises(ReinterpretationError) as context:
-        fstring_conf.text3
-    assert str(context.value) == "Param (text3: {read_file[missing.txt]}) reinterpretation failed: [Errno 2] No such file or directory: 'missing.txt'"
 
 
 def test_yaml_subclass(yaml_conf):
