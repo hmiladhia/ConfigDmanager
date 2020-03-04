@@ -1,6 +1,8 @@
 .idea
 *.pyc
 *.local.*
+/tests/configs/*.py
+
 
 #Ignore thumbnails created by Windows
 Thumbs.db
@@ -36,4 +38,3 @@ packages/
 /build/*
 /ConfigDmanager.egg-info/*
 /dist/*
-/tests/configs/*.py
