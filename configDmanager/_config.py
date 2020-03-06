@@ -11,7 +11,7 @@ class Config(MutableMapping):
     def __init__(self, config_dict: dict, parent: 'Config' = None, name: str = None, path=None, type_=None):
         self.__config_dict = dict()
         self.__parent = parent
-        self.__load_config_dict(config_dict)
+        self.update(config_dict)
 
         # Meta data
         if name:
@@ -28,9 +28,10 @@ class Config(MutableMapping):
     def get_name(self):
         return self.__name
 
-    def to_dict(self):
-        d = {self.__reverse_parse_key(k): self.__reverse_parse_value(v) for k, v in self.__config_dict.items()}
-        if self.__parent:
+    def to_dict(self, private=False):
+        d = {self.__reverse_parse_key(k): self.__reverse_parse_value(v, private=private)
+             for k, v in self.__config_dict.items() if (not k.startswith(self.__private_prefix) or private)}
+        if private and self.__parent:
             d['__parent'] = self.__parent.get_name()
         return d
 
@@ -55,10 +56,6 @@ class Config(MutableMapping):
                         raise KeyError(match.group(1))
                 text = re.sub(match.group(0), value, text)
         return text
-
-    def __load_config_dict(self, dict_config):
-        for key, value in dict_config.items():
-            self.set_value(key, value)
 
     def __repr__(self):
         return f"Config: {self.to_dict()}"
@@ -155,9 +152,10 @@ class Config(MutableMapping):
         return value
 
     @classmethod
-    def __reverse_parse_value(cls, value):
+    def __reverse_parse_value(cls, value, **args):
         if type(value) == Config:
-            return value.to_dict()
+            private = args.get('private', False)
+            return value.to_dict(private=private)
         elif not (isinstance(value, str)) and hasattr(value, '__iter__'):
             return [cls.__reverse_parse_value(p) for p in value]
         return value
@@ -169,5 +167,5 @@ class Config(MutableMapping):
     @classmethod
     def __reverse_parse_key(cls, key):
         n = len(cls.__private_prefix)
-        return key[n:] if key[:n] == cls.__private_prefix else key
+        return key[n:] if key.startswith(cls.__private_prefix) else key
 

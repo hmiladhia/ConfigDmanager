@@ -83,7 +83,7 @@ def test_private_param_add_as_attr(conf):
     with pytest.raises(KeyError):
         result = conf['__param1']
 
-    assert'__param1' in conf.to_dict()
+    assert'__param1' in conf.to_dict(private=True)
 
 
 def test_private_param_add_as_key(conf):
@@ -93,11 +93,16 @@ def test_private_param_add_as_key(conf):
     with pytest.raises(KeyError):
         result = conf['__param2']
 
-    assert'__param2' in conf.to_dict()
+    assert'__param2' in conf.to_dict(private=True)
 
 
 def test_real_private_not_in_dict(conf):
-    assert '__config_dict' not in conf.to_dict()
+    assert '__config_dict' not in conf.to_dict(private=True)
+
+
+def test_private_not_in_dict(conf):
+    conf.__param = 5
+    assert '__param' not in conf.to_dict(private=False)
 
 
 def test_fstrings_works(fstring_conf):
