@@ -28,9 +28,13 @@ class Config(MutableMapping):
     def get_name(self):
         return self.__name
 
-    def to_dict(self, private=False):
-        d = {self.__reverse_parse_key(k): self.__reverse_parse_value(v, private=private)
-             for k, v in self.__config_dict.items() if (not k.startswith(self.__private_prefix) or private)}
+    def to_dict(self, private=True, include_parent=False):
+        d = dict()
+        if include_parent and self.__parent:
+            d.update(self.__parent.to_dict(private, include_parent))
+        d.update({
+            self.__reverse_parse_key(k): self.__reverse_parse_value(v, private=private, include_parent=include_parent)
+            for k, v in self.__config_dict.items() if (not k.startswith(self.__private_prefix) or private)})
         if private and self.__parent:
             d['__parent'] = self.__parent.get_name()
         return d
@@ -58,7 +62,7 @@ class Config(MutableMapping):
         return text
 
     def __repr__(self):
-        return f"Config: {self.to_dict()}"
+        return f"Config: {self.to_dict(private=True, include_parent=False)}"
 
     def __getattr__(self, item):
         try:
@@ -154,8 +158,9 @@ class Config(MutableMapping):
     @classmethod
     def __reverse_parse_value(cls, value, **args):
         if type(value) == Config:
-            private = args.get('private', False)
-            return value.to_dict(private=private)
+            private = args.get('private', True)
+            include_parent = args.get('include_parent', False)
+            return value.to_dict(private=private, include_parent=include_parent)
         elif not (isinstance(value, str)) and hasattr(value, '__iter__'):
             return [cls.__reverse_parse_value(p) for p in value]
         return value

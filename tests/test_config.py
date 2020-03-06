@@ -100,6 +100,14 @@ def test_real_private_not_in_dict(conf):
     assert '__config_dict' not in conf.to_dict(private=True)
 
 
+def test_parent_param_not_in_dict(fstring_conf):
+    assert 'mail_use_tls' not in fstring_conf.to_dict(private=True, include_parent=False)
+
+
+def test_parent_param_in_dict_when_true(fstring_conf):
+    assert 'mail_use_tls' in fstring_conf.to_dict(private=True, include_parent=True)
+
+
 def test_private_not_in_dict(conf):
     conf.__param = 5
     assert '__param' not in conf.to_dict(private=False)
