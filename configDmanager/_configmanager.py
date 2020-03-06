@@ -11,6 +11,7 @@ from configDmanager.config_types import JsonType, YamlType
 
 class ConfigManager:
     supported_types = {'json': JsonType,
+                       'yml': YamlType,
                        'yaml': YamlType}
     default_export_type = 'json'
     @classmethod
