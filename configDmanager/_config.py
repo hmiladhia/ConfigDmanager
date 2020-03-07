@@ -46,19 +46,20 @@ class Config(MutableMapping):
 
     def format_string(self, text, regex=None):
         if regex is None:
-            regex = r"{(.*?)}"
+            regex = r"(?<!\\)\${(.*?)}"
         matches = re.finditer(regex, text, re.MULTILINE | re.DOTALL)
 
-        for matchNum, match in enumerate(matches):
-            for groupNum in range(0, len(match.groups())):
-                try:
-                    value = self[match.group(1)]
-                except KeyError:
-                    if match.group(1).startswith('os_environ') or match.group(1).startswith('read_file'):
-                        value = match.group(0)
-                    else:
-                        raise KeyError(match.group(1))
-                text = re.sub(match.group(0), value, text)
+        def get_value(match):
+            try:
+                value = self[match.group(1)]
+            except KeyError:
+                if match.group(1).startswith('os_environ') or match.group(1).startswith('read_file'):
+                    value = match.group(0)[1:]
+                else:
+                    raise KeyError(match.group(1))
+            return value
+
+        text = re.sub(regex, get_value, text)
         return text
 
     def __repr__(self):
