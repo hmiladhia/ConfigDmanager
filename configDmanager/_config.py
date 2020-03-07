@@ -8,6 +8,9 @@ from configDmanager._format import FileReader
 
 
 class Config(MutableMapping):
+    __c_regex__ = re.compile(r"(?<!\\)\${(.*?)}")
+    __c_fe_regex__ = re.compile(r'\${(.*?)\[(.*?)\]}')
+
     def __init__(self, config_dict: dict, parent: 'Config' = None, name: str = None, path=None, type_=None):
         self.__config_dict = dict()
         self.__parent = parent
@@ -23,7 +26,7 @@ class Config(MutableMapping):
             self.set_value('__type', type_)
 
         # Format Executors
-        self.__file_reader = FileReader(path)
+        self.__format_exec = dict(read_file=FileReader(path))
 
     def get_name(self):
         return self.__name
@@ -44,23 +47,23 @@ class Config(MutableMapping):
         value = self.__parse_value(value, key)
         self.__config_dict[key] = value
 
-    def format_string(self, text, regex=None):
-        if regex is None:
-            regex = r"(?<!\\)\${(.*?)}"
-        matches = re.finditer(regex, text, re.MULTILINE | re.DOTALL)
+    def __format_string(self, text):
+        return re.sub(self.__c_regex__, self._get_format_value, text)
 
-        def get_value(match):
-            try:
-                value = self[match.group(1)]
-            except KeyError:
-                if match.group(1).startswith('os_environ') or match.group(1).startswith('read_file'):
-                    value = match.group(0)[1:]
-                else:
-                    raise KeyError(match.group(1))
-            return value
-
-        text = re.sub(regex, get_value, text)
-        return text
+    def _get_format_value(self, match):
+        try:
+            return self[match.group(1)]
+        except KeyError:
+            if match.group(1).startswith('os_environ'):
+                return match.group(0)[1:]
+            else:
+                if re.fullmatch(self.__c_fe_regex__, match.group(0)):
+                    try:
+                        return re.sub(self.__c_fe_regex__,
+                                  lambda m: self.__format_exec[m.group(1)][m.group(2)], match.group(0))
+                    except KeyError:
+                        pass
+                raise KeyError(match.group(1))
 
     def __repr__(self):
         return f"Config: {self.to_dict(private=True, include_parent=False)}"
@@ -96,12 +99,12 @@ class Config(MutableMapping):
     def __get_single_item(self, sub_attributes):
         value = self.__get_raw_single_item(sub_attributes)
         if isinstance(value, str):
-            value = self.__reinterpret_single_item(sub_attributes, value)
+            value = self.format_string(sub_attributes, value)
         return value
 
-    def __reinterpret_single_item(self, sub_attributes, value):
+    def format_string(self, sub_attributes, value):
         try:
-            value = self.format_string(value)
+            value = self.__format_string(value)
         except RecursionError:
             raise ReinterpretationError(sub_attributes, value, 'Due to cycle - RecursionError', RecursionError)
         except KeyError as e:
@@ -111,7 +114,7 @@ class Config(MutableMapping):
             raise ReinterpretationError(sub_attributes, value, e, FileNotFoundError)
 
         try:
-            value = value.format(os_environ=environ, read_file=self.__file_reader)
+            value = value.format(os_environ=environ)
         except KeyError as e:
             raise ReinterpretationError(sub_attributes, value,
                                         f'Could not find {e} in Environment variables', KeyError)

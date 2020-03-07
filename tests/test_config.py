@@ -136,7 +136,7 @@ def test_fstrings_recursion_error(fstring_conf):
      "{os_environ[password]}) reinterpretation failed: Could not find 'password' in Environment variables"),
     ('my_other_password', ReinterpretationError,  # test missing param for reinpretation error
      "Param (my_other_password: ${passwor}) reinterpretation failed: Could not find param 'passwor' in FstringConfig"),
-    ('text3', ReinterpretationError, "Param (text3: {read_file[missing.txt]}) reinterpretation failed: [Errno 2] No "
+    ('text3', ReinterpretationError, "Param (text3: ${read_file[missing.txt]}) reinterpretation failed: [Errno 2] No "
                                      "such file or directory: 'missing.txt'")])  # test file integration error
 def test_access_error_message(key, error_type, error_msg, fstring_conf):
     with pytest.raises(error_type) as context:
