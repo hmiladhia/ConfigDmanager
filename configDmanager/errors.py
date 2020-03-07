@@ -9,7 +9,10 @@ class ConfigError(Error):
 
 class ReinterpretationError(ConfigError):
     def __init__(self, attr, value, message, origin=None):
-        self.message = f"Param ({attr}: {value}) reinterpretation failed: {message}"
+        if attr:
+            self.message = f"Param ({attr}: {value}) reinterpretation failed: {message}"
+        else:
+            self.message = f"Reinterpretation of {value} failed: {message}"
         self.origin = origin
 
     def __str__(self):
@@ -26,3 +29,12 @@ class ConfigNotFoundError(ConfigManagerError):
 
     def __str__(self):
         return self.message
+
+
+class FormatExecutorError(Error):
+    def __init__(self, msg, type_=None):
+        self.msg = msg
+        self.type_ = type_
+
+    def __str__(self):
+        return self.msg

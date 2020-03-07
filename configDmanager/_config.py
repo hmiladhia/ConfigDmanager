@@ -3,8 +3,8 @@ import re
 from os import environ
 from collections.abc import MutableMapping
 
-from configDmanager.errors import ReinterpretationError
-from configDmanager._format import FileReader
+from configDmanager.errors import ReinterpretationError, FormatExecutorError
+from configDmanager._format import FileReader, EnvironReader
 
 
 class Config(MutableMapping):
@@ -26,7 +26,8 @@ class Config(MutableMapping):
             self.set_value('__type', type_)
 
         # Format Executors
-        self.__format_exec = dict(read_file=FileReader(path))
+        self.__format_exec = dict(read_file=FileReader(path),
+                                  os_environ=EnvironReader())
 
     def get_name(self):
         return self.__name
@@ -47,23 +48,33 @@ class Config(MutableMapping):
         value = self.__parse_value(value, key)
         self.__config_dict[key] = value
 
-    def __format_string(self, text):
-        return re.sub(self.__c_regex__, self._get_format_value, text)
+    def format_string(self, value, sub_attributes=None):
+        try:
+            value = self.__format_string(value)
+        except RecursionError:
+            raise ReinterpretationError(sub_attributes, value, 'Due to cycle - RecursionError', RecursionError)
+        except KeyError as e:
+            raise ReinterpretationError(sub_attributes, value,
+                                        f"Could not find param {e} in FstringConfig", KeyError)
+        except FormatExecutorError as e:
+            raise ReinterpretationError(sub_attributes, value, e.msg, e.type_)
 
-    def _get_format_value(self, match):
+        return value
+
+    def __format_string(self, text):
+        return re.sub(self.__c_regex__, self.__get_format_value, text)
+
+    def __get_format_value(self, match):
         try:
             return self[match.group(1)]
         except KeyError:
-            if match.group(1).startswith('os_environ'):
-                return match.group(0)[1:]
-            else:
-                if re.fullmatch(self.__c_fe_regex__, match.group(0)):
-                    try:
-                        return re.sub(self.__c_fe_regex__,
+            if re.fullmatch(self.__c_fe_regex__, match.group(0)):
+                try:
+                    return re.sub(self.__c_fe_regex__,
                                   lambda m: self.__format_exec[m.group(1)][m.group(2)], match.group(0))
-                    except KeyError:
-                        pass
-                raise KeyError(match.group(1))
+                except KeyError:
+                    pass
+            raise KeyError(match.group(1))
 
     def __repr__(self):
         return f"Config: {self.to_dict(private=True, include_parent=False)}"
@@ -99,27 +110,7 @@ class Config(MutableMapping):
     def __get_single_item(self, sub_attributes):
         value = self.__get_raw_single_item(sub_attributes)
         if isinstance(value, str):
-            value = self.format_string(sub_attributes, value)
-        return value
-
-    def format_string(self, sub_attributes, value):
-        try:
-            value = self.__format_string(value)
-        except RecursionError:
-            raise ReinterpretationError(sub_attributes, value, 'Due to cycle - RecursionError', RecursionError)
-        except KeyError as e:
-            raise ReinterpretationError(sub_attributes, value,
-                                        f"Could not find param {e} in FstringConfig", KeyError)
-        except FileNotFoundError as e:
-            raise ReinterpretationError(sub_attributes, value, e, FileNotFoundError)
-
-        try:
-            value = value.format(os_environ=environ)
-        except KeyError as e:
-            raise ReinterpretationError(sub_attributes, value,
-                                        f'Could not find {e} in Environment variables', KeyError)
-        except FileNotFoundError as e:
-            raise ReinterpretationError(sub_attributes, value, e, FileNotFoundError)
+            value = self.format_string(value, sub_attributes)
         return value
 
     def __get_raw_single_item(self, sub_attributes):

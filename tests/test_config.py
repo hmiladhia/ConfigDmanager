@@ -133,7 +133,7 @@ def test_fstrings_recursion_error(fstring_conf):
 @pytest.mark.parametrize("key, error_type, error_msg", [
     ('po', KeyError, "\"Could not find param 'po' in FstringConfig\""),  # test missing param error
     ('mypassword', ReinterpretationError, "Param (mypassword: "  # test missing environment param error
-     "{os_environ[password]}) reinterpretation failed: Could not find 'password' in Environment variables"),
+     "${os_environ[password]}) reinterpretation failed: Could not find 'password' in Environment variables"),
     ('my_other_password', ReinterpretationError,  # test missing param for reinpretation error
      "Param (my_other_password: ${passwor}) reinterpretation failed: Could not find param 'passwor' in FstringConfig"),
     ('text3', ReinterpretationError, "Param (text3: ${read_file[missing.txt]}) reinterpretation failed: [Errno 2] No "

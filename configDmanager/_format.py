@@ -1,5 +1,7 @@
 import os
 
+from configDmanager.errors import FormatExecutorError
+
 
 class FormatExecutor:
     def __getitem__(self, item):
@@ -25,6 +27,17 @@ class FileReader(FormatExecutor):
 
     @staticmethod
     def read_file(file_path):
-        with open(file_path, 'r') as file:
-            content = file.read()
+        try:
+            with open(file_path, 'r') as file:
+                content = file.read()
+        except FileNotFoundError as e:
+            raise FormatExecutorError(e, FileNotFoundError)
         return content
+
+
+class EnvironReader(FormatExecutor):
+    def _execute(self, item):
+        try:
+            return os.environ[item]
+        except KeyError as e:
+            raise FormatExecutorError(f'Could not find {e} in Environment variables', KeyError)
