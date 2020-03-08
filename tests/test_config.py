@@ -144,6 +144,10 @@ def test_access_error_message(key, error_type, error_msg, fstring_conf):
     assert str(context.value) == error_msg
 
 
+def test_reinterpretation_escape(fstring_conf):
+    assert fstring_conf['value3'] == r"${Hello World}"
+
+
 def test_attribute_access_error_message(fstring_conf):
     with pytest.raises(AttributeError) as context:
         fstring_conf.po

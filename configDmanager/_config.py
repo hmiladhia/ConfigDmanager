@@ -8,7 +8,8 @@ from configDmanager._format import FileReader, EnvironReader
 
 
 class Config(MutableMapping):
-    __c_regex__ = re.compile(r"(?<!\\)\${(.*?)}")
+    __c_escape__ = '$'
+    __c_regex__ = re.compile(r"(?<!\$)\${(.*?)}")
     __c_fe_regex__ = re.compile(r'\${(.*?)\[(.*?)\]}')
 
     def __init__(self, config_dict: dict, parent: 'Config' = None, name: str = None, path=None, type_=None):
@@ -62,7 +63,8 @@ class Config(MutableMapping):
         return value
 
     def __format_string(self, text):
-        return re.sub(self.__c_regex__, self.__get_format_value, text)
+        text = re.sub(self.__c_regex__, self.__get_format_value, text)
+        return self.__remove_escaped(text, self.__c_escape__)
 
     def __get_format_value(self, match):
         try:
@@ -169,3 +171,17 @@ class Config(MutableMapping):
         n = len(cls.__private_prefix)
         return key[n:] if key.startswith(cls.__private_prefix) else key
 
+    @staticmethod
+    def __remove_escaped(text, escape_char):
+        is_escaped = False
+        res = ""
+        for c in text:
+            if is_escaped:
+                res += c
+                is_escaped = False
+            else:
+                if c == escape_char:
+                    is_escaped = True
+                else:
+                    res += c
+        return res

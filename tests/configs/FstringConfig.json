@@ -10,5 +10,6 @@
    "text2": "${read_file[long_text.txt]}",
    "text3": "${read_file[missing.txt]}",
    "value1" : "${value2}",
-   "value2" : "${value1}"
+   "value2" : "${value1}",
+   "value3" : "$${Hello World}"
 }
