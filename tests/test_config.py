@@ -80,8 +80,7 @@ def test_private_param_add_as_attr(conf):
     conf.__param1 = 'value1'
     with pytest.raises(AttributeError):
         result = conf.__param1
-    with pytest.raises(KeyError):
-        result = conf['__param1']
+    assert conf['__param1'] == 'value1'
 
     assert'__param1' in conf.to_dict(private=True)
 
@@ -90,8 +89,7 @@ def test_private_param_add_as_key(conf):
     conf['__param2'] = 'value2'
     with pytest.raises(AttributeError):
         result = conf.__param2
-    with pytest.raises(KeyError):
-        result = conf['__param2']
+    result = conf['__param2'] == 'value2'
 
     assert'__param2' in conf.to_dict(private=True)
 

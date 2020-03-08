@@ -49,6 +49,13 @@ class Config(MutableMapping):
         value = self.__parse_value(value, key)
         self.__config_dict[key] = value
 
+    def get_value(self, key, raw=False, private=True):
+        key = self.__parse_key(key) if private else key
+        value = self.__config_dict[key]
+        if not raw and isinstance(value, str):
+            value = self.format_string(value, key)
+        return value
+
     def format_string(self, value, sub_attributes=None):
         try:
             value = self.__format_string(value)
@@ -83,7 +90,7 @@ class Config(MutableMapping):
 
     def __getattr__(self, item):
         try:
-            return self[item]
+            return self.__get_single_item(item, private=False)
         except KeyError:
             self.__getattribute__(item)
 
@@ -99,31 +106,28 @@ class Config(MutableMapping):
         elif not (isinstance(k, str)) and hasattr(k, '__iter__'):
             return Config({key: self[key] for key in k})
 
+        return self.__get_single_item(k, private=True)
+
+    def __get_single_item(self, key, private):
         try:
-            return self.__get_single_item(k)
+            return self.__get_single_local_item(key, private)
         except KeyError as e:
             if self.__parent:
                 try:
-                    return self.__parent.__get_single_item(k)
+                    return self.__parent.__get_single_local_item(key, private)
                 except KeyError:
                     pass
             raise KeyError(f'Could not find param {e} in {self.__name if self.__name else "config"}')
 
-    def __get_single_item(self, sub_attributes):
-        value = self.__get_raw_single_item(sub_attributes)
-        if isinstance(value, str):
-            value = self.format_string(value, sub_attributes)
-        return value
-
-    def __get_raw_single_item(self, sub_attributes):
+    def __get_single_local_item(self, sub_attributes, private):
         if isinstance(sub_attributes, str):
             sub_attributes = sub_attributes.split('.')
         if not sub_attributes:
             raise ValueError
         if len(sub_attributes) > 1:
-            return self.__config_dict[sub_attributes[0]].__get_single_item(sub_attributes[1:])
+            return self.__config_dict[sub_attributes[0]].__get_single_local_item(sub_attributes[1:], private)
         else:
-            return self.__config_dict[sub_attributes[0]]
+            return self.get_value(sub_attributes[0], raw=False, private=private)
 
     def __setitem__(self, k, v) -> None:
         self.set_value(k, v)
