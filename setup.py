@@ -11,7 +11,5 @@ conf = import_config(f'PackageConfigs.{conf_name}')
 try:
     setuptools.setup(**conf)
 finally:
-    gversion, version = conf.version.rsplit('.', 1)
-    version = int(version) + 1
-    conf.version = f"{gversion}.{version}"
+    conf['__version.__patch'] += 1
     ConfigManager.export_config_file(conf, conf_name, os.path.join(os.getcwd(), 'PackageConfigs'))

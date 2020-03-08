@@ -19,12 +19,12 @@ class Config(MutableMapping):
 
         # Meta data
         if name:
-            self.set_value('__name', name)
+            self.__set_single_item('__name', name, private=True)
         else:
             self.__name = None
 
         if type_:
-            self.set_value('__type', type_)
+            self.__set_single_item('__type', type_, private=True)
 
         # Format Executors
         self.__format_exec = dict(read_file=FileReader(path),
@@ -44,20 +44,6 @@ class Config(MutableMapping):
             d['__parent'] = self.__parent.get_name()
         return d
 
-    def set_value(self, key, value):
-        if not isinstance(key, str):
-            raise TypeError('Key should be of type str')
-        key = self.__parse_key(key)
-        value = self.__parse_value(value)
-        self.__config_dict[key] = value
-
-    def get_value(self, key, raw=False, private=True):
-        key = self.__parse_key(key) if private else key
-        value = self.__config_dict[key]
-        if not raw and isinstance(value, str):
-            value = self.format_string(value, key)
-        return value
-
     def format_string(self, value, sub_attributes=None):
         try:
             value = self.__format_string(value)
@@ -69,6 +55,21 @@ class Config(MutableMapping):
         except FormatExecutorError as e:
             raise ReinterpretationError(sub_attributes, value, e.msg, e.type_)
 
+        return value
+
+    def __set_value(self, key, value, private=True):
+        new_key = self.__parse_key(key)
+        if not private and key != new_key:
+            raise ValueError('Trying to set private parameter')
+        value = self.__parse_value(value)
+        self.__config_dict[new_key] = value
+        return value
+
+    def __get_value(self, key, raw=False, private=True):
+        key = self.__parse_key(key) if private else key
+        value = self.__config_dict[key]
+        if not raw and isinstance(value, str):
+            value = self.format_string(value, key)
         return value
 
     def __get_single_item(self, key, private):
@@ -83,14 +84,31 @@ class Config(MutableMapping):
             raise KeyError(f'Could not find param {e} in {self.__name if self.__name else "config"}')
 
     def __get_single_local_item(self, sub_attributes, private):
-        if isinstance(sub_attributes, str):
-            sub_attributes = sub_attributes.split('.')
-        if not sub_attributes:
-            raise ValueError
-        if len(sub_attributes) > 1:
-            return self.get_value(sub_attributes[0], raw=False, private=private).__get_single_local_item(sub_attributes[1:], private)
+        sub_attributes = self.__get_sub_attributes_list(sub_attributes)
+        if len(sub_attributes) == 1:
+            return self.__get_value(sub_attributes[0], raw=False, private=private)
         else:
-            return self.get_value(sub_attributes[0], raw=False, private=private)
+            conf = self.__get_value(sub_attributes[0], raw=True, private=private)
+            return conf.__get_single_local_item(sub_attributes[1], private)
+
+    def __set_single_item(self, sub_attributes, value, private):
+        sub_attributes = self.__get_sub_attributes_list(sub_attributes)
+        if len(sub_attributes) == 1:
+            return self.__set_value(sub_attributes[0], value, private=private)
+        else:
+            try:
+                conf = self.__get_value(sub_attributes[0], raw=True, private=private)
+            except KeyError:
+                conf = self.__set_value(sub_attributes[0], Config(dict()), private=private)
+            conf.__set_single_item(sub_attributes[1], value, private)
+
+    @staticmethod
+    def __get_sub_attributes_list(sub_attributes):
+        if isinstance(sub_attributes, str):
+            sub_attributes = sub_attributes.split('.', 1)
+        else:
+            raise TypeError('Key should be of type str')
+        return sub_attributes
 
     def __format_string(self, text):
         text = re.sub(self.__c_regex, self.__get_format_value, text)
@@ -111,15 +129,18 @@ class Config(MutableMapping):
     def __repr__(self):
         return f"Config: {self.to_dict(private=True, include_parent=False)}"
 
+    def __str__(self):
+        return str(self.to_dict(private=False, include_parent=False))
+
     def __getattr__(self, item):
         try:
             return self.__get_single_item(item, private=False)
         except KeyError:
-            self.__getattribute__(item)
+            return self.__getattribute__(item)
 
     def __setattr__(self, key, value):
         if not key.startswith(self.__private_prefix):
-            self.set_value(key, value)
+            self.__set_single_item(key, value, private=True)
         else:
             return super(Config, self).__setattr__(key, value)
 
@@ -132,7 +153,7 @@ class Config(MutableMapping):
         return self.__get_single_item(k, private=True)
 
     def __setitem__(self, k, v) -> None:
-        self.set_value(k, v)
+        self.__set_single_item(k, v, private=True)
 
     def __delitem__(self, v) -> None:
         del self.__config_dict[v]

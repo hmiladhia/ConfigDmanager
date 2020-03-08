@@ -76,7 +76,7 @@ def test_param_add_as_key(conf):
 
 def test_private_param_add_as_attr(conf):
     with pytest.raises(AttributeError):
-        result = conf.__param1
+        conf.__param1
     conf.__param1 = 'value1'
     with pytest.raises(AttributeError):
         result = conf.__param1
@@ -121,7 +121,7 @@ def test_environ_var_works(fstring_conf):
 
 def test_fstrings_recursion_error(fstring_conf):
     with pytest.raises(ReinterpretationError) as context:
-        result = fstring_conf.value1
+        fstring_conf.value1
     expected = {'Param (value1: ${value2}) reinterpretation failed: Due to cycle - RecursionError',
                 'Param (value2: ${value1}) reinterpretation failed: Due to cycle - RecursionError'}
     assert str(context.value) in expected
@@ -172,7 +172,13 @@ def test_sub_key_reinterpretation(fstring_conf):
     assert fstring_conf.version == "0.0.4"
 
 
-def test_param_setting(fstring_conf):
+@pytest.mark.parametrize("key", [158, [1, 2, 3]])
+def test_param_setting(key, fstring_conf):
     with pytest.raises(TypeError) as context:
-        fstring_conf[152] = "Test value"
+        fstring_conf[key] = "Test value"
     assert str(context.value) == 'Key should be of type str'
+
+
+def test_sub_key_setting(fstring_conf):
+    fstring_conf['__version.__patch'] = 8
+    assert fstring_conf['__version.__patch'] == 8
