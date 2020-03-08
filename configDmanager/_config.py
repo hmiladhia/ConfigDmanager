@@ -8,9 +8,9 @@ from configDmanager._format import FileReader, EnvironReader
 
 
 class Config(MutableMapping):
-    __c_escape__ = '$'
-    __c_regex__ = re.compile(r"(?<!\$)\${(.*?)}")
-    __c_fe_regex__ = re.compile(r'\${(.*?)\[(.*?)\]}')
+    __c_escape = '$'
+    __c_regex = re.compile(r"(?<!\$)\${(.*?)}")
+    __c_fe_regex = re.compile(r'\${(.*?)\[(.*?)\]}')
 
     def __init__(self, config_dict: dict, parent: 'Config' = None, name: str = None, path=None, type_=None):
         self.__config_dict = dict()
@@ -63,16 +63,16 @@ class Config(MutableMapping):
         return value
 
     def __format_string(self, text):
-        text = re.sub(self.__c_regex__, self.__get_format_value, text)
-        return self.__remove_escaped(text, self.__c_escape__)
+        text = re.sub(self.__c_regex, self.__get_format_value, text)
+        return self.__remove_escaped(text, self.__c_escape)
 
     def __get_format_value(self, match):
         try:
             return self[match.group(1)]
         except KeyError:
-            if re.fullmatch(self.__c_fe_regex__, match.group(0)):
+            if re.fullmatch(self.__c_fe_regex, match.group(0)):
                 try:
-                    return re.sub(self.__c_fe_regex__,
+                    return re.sub(self.__c_fe_regex,
                                   lambda m: self.__format_exec[m.group(1)][m.group(2)], match.group(0))
                 except KeyError:
                     pass

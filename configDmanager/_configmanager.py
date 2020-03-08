@@ -32,7 +32,7 @@ class ConfigManager:
         config_dict['__name'] = config_name
         type_ = config_dict.get('__type', None) if type_ is None else type_
         type_ = type_ if type_ else cls.default_export_type
-        config_path = cls.__get_config_path(config_name if config_name else obj.__name__, path, type_)
+        config_path = cls.__get_config_path(config_name if config_name else obj.get_name() or obj.__name__, path, type_)
         with open(config_path, 'w') as config_file:
             cls.supported_types[type_].export_config(config_dict, config_file, **kwargs)
 

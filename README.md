@@ -34,9 +34,9 @@ python -m pip install ConfigDmanager
     {
       "__name": "MainConfig",
       "__parent": "demo.ParentConfig",
-      "param2": "Value 2 and {param1}",
-      "user_info": {"user": "username", "password": "{os_environ[password]}"},
-      "long_text": "{read_file[./demo.py]}"
+      "param2": "Value 2 and ${param1}",
+      "user_info": {"user": "username", "password": "${os_environ[password]}"},
+      "long_text": "${read_file[./demo.py]}"
     }
     ```
 
