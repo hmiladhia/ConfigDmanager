@@ -166,3 +166,13 @@ def test_file_integration(text_key, fstring_conf):
 
 def test_yaml_subclass(yaml_conf):
     assert yaml_conf.subconfig.param1 == 'value1'
+
+
+def test_sub_key_reinterpretation(fstring_conf):
+    assert fstring_conf.version == "0.0.4"
+
+
+def test_param_setting(fstring_conf):
+    with pytest.raises(TypeError) as context:
+        fstring_conf[152] = "Test value"
+    assert str(context.value) == 'Key should be of type str'

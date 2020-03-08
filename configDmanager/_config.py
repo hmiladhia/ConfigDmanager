@@ -45,8 +45,10 @@ class Config(MutableMapping):
         return d
 
     def set_value(self, key, value):
+        if not isinstance(key, str):
+            raise TypeError('Key should be of type str')
         key = self.__parse_key(key)
-        value = self.__parse_value(value, key)
+        value = self.__parse_value(value)
         self.__config_dict[key] = value
 
     def get_value(self, key, raw=False, private=True):
@@ -69,18 +71,39 @@ class Config(MutableMapping):
 
         return value
 
+    def __get_single_item(self, key, private):
+        try:
+            return self.__get_single_local_item(key, private)
+        except KeyError as e:
+            if self.__parent:
+                try:
+                    return self.__parent.__get_single_local_item(key, private)
+                except KeyError:
+                    pass
+            raise KeyError(f'Could not find param {e} in {self.__name if self.__name else "config"}')
+
+    def __get_single_local_item(self, sub_attributes, private):
+        if isinstance(sub_attributes, str):
+            sub_attributes = sub_attributes.split('.')
+        if not sub_attributes:
+            raise ValueError
+        if len(sub_attributes) > 1:
+            return self.get_value(sub_attributes[0], raw=False, private=private).__get_single_local_item(sub_attributes[1:], private)
+        else:
+            return self.get_value(sub_attributes[0], raw=False, private=private)
+
     def __format_string(self, text):
         text = re.sub(self.__c_regex, self.__get_format_value, text)
         return self.__remove_escaped(text, self.__c_escape)
 
     def __get_format_value(self, match):
         try:
-            return self[match.group(1)]
+            return str(self[match.group(1)])
         except KeyError:
             if re.fullmatch(self.__c_fe_regex, match.group(0)):
                 try:
                     return re.sub(self.__c_fe_regex,
-                                  lambda m: self.__format_exec[m.group(1)][m.group(2)], match.group(0))
+                                  lambda m: str(self.__format_exec[m.group(1)][m.group(2)]), match.group(0))
                 except KeyError:
                     pass
             raise KeyError(match.group(1))
@@ -107,27 +130,6 @@ class Config(MutableMapping):
             return Config({key: self[key] for key in k})
 
         return self.__get_single_item(k, private=True)
-
-    def __get_single_item(self, key, private):
-        try:
-            return self.__get_single_local_item(key, private)
-        except KeyError as e:
-            if self.__parent:
-                try:
-                    return self.__parent.__get_single_local_item(key, private)
-                except KeyError:
-                    pass
-            raise KeyError(f'Could not find param {e} in {self.__name if self.__name else "config"}')
-
-    def __get_single_local_item(self, sub_attributes, private):
-        if isinstance(sub_attributes, str):
-            sub_attributes = sub_attributes.split('.')
-        if not sub_attributes:
-            raise ValueError
-        if len(sub_attributes) > 1:
-            return self.__config_dict[sub_attributes[0]].__get_single_local_item(sub_attributes[1:], private)
-        else:
-            return self.get_value(sub_attributes[0], raw=False, private=private)
 
     def __setitem__(self, k, v) -> None:
         self.set_value(k, v)

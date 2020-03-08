@@ -11,5 +11,11 @@
    "text3": "${read_file[missing.txt]}",
    "value1" : "${value2}",
    "value2" : "${value1}",
-   "value3" : "$${Hello World}"
+   "value3" : "$${Hello World}",
+     "__version": {
+    "__major": 0,
+    "__minor": 0,
+    "__patch": 4
+  },
+  "version": "${__version.__major}.${__version.__minor}.${__version.__patch}"
 }
