@@ -25,10 +25,10 @@ python -m pip install ConfigDmanager
     - The **__parent** parameter specifies the path to another configuration file that will give us default values ( Think of it as inheritance ). 
     - The text contained between brackets will be reinterpreted in runtime : 
     
-    in the example below **{param1}** will be reinterpreted as "Value 1"
+    in the example below **${param1}** will be reinterpreted as "Value 1"
     
-    - The use of environment variables for sensitive data like passwords is also possible : through this text **{os_environ[password]}**
-    - You can also read the content of a text file with a simple : **{read_file[file_path]}** as shown in the example below.
+    - The use of environment variables for sensitive data like passwords is also possible : through this text **${os_environ[password]}**
+    - You can also read the content of a text file with a simple : **${read_file[file_path]}** as shown in the example below.
 
     ```json
     {
