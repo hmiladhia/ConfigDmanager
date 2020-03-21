@@ -1,6 +1,5 @@
 import re
 
-from os import environ
 from collections.abc import MutableMapping
 
 from configDmanager.errors import ReinterpretationError, FormatExecutorError
@@ -8,8 +7,7 @@ from configDmanager._format import FileReader, EnvironReader
 
 
 class Config(MutableMapping):
-    __c_escape = '$'
-    __c_regex = re.compile(r"(?<!\$)\${(.*?)}")
+    __c_regex = re.compile(r"\${(.*?)}")
     __c_fe_regex = re.compile(r'\${(.*?)\[(.*?)\]}')
 
     def __init__(self, config_dict: dict, parent: 'Config' = None, name: str = None, path=None, type_=None):
@@ -56,6 +54,9 @@ class Config(MutableMapping):
             raise ReinterpretationError(sub_attributes, value, e.msg, e.type_)
 
         return value
+
+    def get_raw(self, key, private=False):
+        return self.__get_value(key, raw=True, private=private)
 
     def __set_value(self, key, value, private=True):
         new_key = self.__parse_key(key)
@@ -111,8 +112,7 @@ class Config(MutableMapping):
         return sub_attributes
 
     def __format_string(self, text):
-        text = re.sub(self.__c_regex, self.__get_format_value, text)
-        return self.__remove_escaped(text, self.__c_escape)
+        return re.sub(self.__c_regex, self.__get_format_value, text)
 
     def __get_format_value(self, match):
         try:
@@ -198,17 +198,3 @@ class Config(MutableMapping):
         n = len(cls.__private_prefix)
         return key[n:] if key.startswith(cls.__private_prefix) else key
 
-    @staticmethod
-    def __remove_escaped(text, escape_char):
-        is_escaped = False
-        res = ""
-        for c in text:
-            if is_escaped:
-                res += c
-                is_escaped = False
-            else:
-                if c == escape_char:
-                    is_escaped = True
-                else:
-                    res += c
-        return res

@@ -143,7 +143,7 @@ def test_access_error_message(key, error_type, error_msg, fstring_conf):
 
 
 def test_reinterpretation_escape(fstring_conf):
-    assert fstring_conf['value3'] == r"${Hello World}"
+    assert fstring_conf.get_raw('value3') == r"${Hello World}"
 
 
 def test_attribute_access_error_message(fstring_conf):
