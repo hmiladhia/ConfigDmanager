@@ -14,6 +14,7 @@ class ConfigManager:
                        'yml': YamlType,
                        'yaml': YamlType}
     default_export_type = 'json'
+
     @classmethod
     def import_config(cls, name, path=None, type_=None):
         level = 0
@@ -27,11 +28,22 @@ class ConfigManager:
         return cls.__config_import(name[level:], path, level, type_)
 
     @classmethod
+    def export_config(cls, config, name, path=None, type_=None):
+        level = 0
+        if name.startswith('.'):
+            if not path:
+                path = os.getcwd()
+            for character in name:
+                if character != '.':
+                    break
+                level += 1
+        return cls.__config_export(config, name[level:], path, level, type_)
+
+    @classmethod
     def export_config_file(cls, obj, config_name=None, path=None, type_=None, **kwargs):
         config_dict = obj.to_dict()
         config_dict['__name'] = config_name
-        type_ = config_dict.get('__type', None) if type_ is None else type_
-        type_ = type_ if type_ else cls.default_export_type
+        type_ = type_ or config_dict.get('__type', cls.default_export_type)
         config_path = cls.__get_config_path(config_name if config_name else obj.get_name() or obj.__name__, path, type_)
         with open(config_path, 'w') as config_file:
             cls.supported_types[type_].export_config(config_dict, config_file, **kwargs)
@@ -73,6 +85,15 @@ class ConfigManager:
                 pass
 
         raise ConfigNotFoundError(name, path)
+
+    @classmethod
+    def __config_export(cls, config, name, path=None, level=0, type_=None):
+        cls.__sanity_check(name, path, level)
+        base, _, name_base = name.rpartition('.')
+        base = base.replace('.', '/')
+        c_path = Path(path or os.getcwd())
+        c_path = (c_path.parent if level == 2 else c_path) / base
+        return cls.export_config_file(config, name_base, c_path, type_)
 
     @classmethod
     def __get_config_path_and_type(cls, config_name, path, type_=None):
