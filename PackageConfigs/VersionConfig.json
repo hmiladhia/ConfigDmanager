@@ -1,6 +1,7 @@
 {
   "__name": "VersionConfig",
   "__parent": "PackageConfig",
+  "__type": "json",
   "__version": {
     "__major": 0,
     "__minor": 2,

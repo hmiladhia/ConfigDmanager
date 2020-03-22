@@ -32,6 +32,12 @@ class Config(MutableMapping):
     def get_name(self):
         return self.__name
 
+    def get_parent(self):
+        try:
+            return self.__parent
+        except AttributeError:
+            return None
+
     def to_dict(self, private=True, include_parent=False):
         d = dict()
         if include_parent and self.__parent:

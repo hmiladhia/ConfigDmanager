@@ -161,7 +161,8 @@ class ConfigManager:
     @staticmethod
     def __set_metadata(config_dict, obj, config_name, type_):
         config_dict['__name'] = config_name
-        parent_type = obj.get('__parent.__type', None)
+        parent = obj.get_parent()
+        parent_type = parent.get('__type', None) if parent else None
         if parent_type:
             config_dict['__parent_type'] = parent_type
         config_dict['__type'] = type_
