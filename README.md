@@ -71,3 +71,27 @@ another_obj = RandomClass(param2='Another Value', long_text="Not so long", **con
 
 
 
+## Export Config file
+
+You can export a Config by simply using the **export_config** function
+
+```python
+from configDmanager import export_config, Config
+
+config = Config({'my_param': 'my_value'})
+
+export_config(config, 'NewConfig')
+```
+
+If you wish to modify an existing config, you can use **update_config** function :
+
+```python
+from configDmanager import update_config
+
+# You can use a dict to update Config values
+update_config({'param' : 'value'}, 'MyConfig')
+
+# You can also use a callable that takes the config returns a dict
+update_config(lambda conf: {'numeric': conf['numeric'] + 1}, 'MyConfig')
+```
+
