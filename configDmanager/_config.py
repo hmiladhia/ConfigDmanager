@@ -10,10 +10,11 @@ class Config(MutableMapping):
     __c_regex = re.compile(r"\${(.*?)}")
     __c_fe_regex = re.compile(r'\${(.*?)\[(.*?)\]}')
 
-    def __init__(self, config_dict: dict, parent: 'Config' = None, name: str = None, path=None, type_=None):
+    def __init__(self, config_dict: dict = None, parent: 'Config' = None, name: str = None, path=None, type_=None):
         self.__config_dict = dict()
         self.__parent = parent
-        self.update(config_dict)
+        if config_dict:
+            self.update(config_dict)
 
         # Meta data
         if name:
