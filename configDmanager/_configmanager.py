@@ -18,7 +18,18 @@ class ConfigManager:
     @classmethod
     def import_config(cls, name, path=None, type_=None):
         level, path = cls.__level_parse(name, path)
-        return cls.__config_import(name[level:], path, level, type_)
+        return cls.__config_import(name[level:], path, level, type_)[0]
+
+    @classmethod
+    def update_config(cls, mod, name, path=None, type_=None):
+        level, path = cls.__level_parse(name, path)
+        config, name_base, c_path = cls.__config_import(name[level:], path, level, type_)
+        if isinstance(mod, dict) or isinstance(mod, Config):
+            config.update(mod)
+        if callable(mod):
+            config.update(mod(config))
+        cls.export_config(config, name_base, c_path, type_)
+        return config
 
     @classmethod
     def export_config(cls, config, name, path=None, type_=None):
@@ -61,7 +72,7 @@ class ConfigManager:
             try:
                 if c_path:
                     name_base, c_path = cls.__parse_path(name, c_path, level)
-                    return cls.__load_config(name_base, c_path, type_)
+                    return cls.__load_config(name_base, c_path, type_), name_base, c_path
             except (FileNotFoundError, PermissionError):
                 pass
 
