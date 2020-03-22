@@ -17,26 +17,12 @@ class ConfigManager:
 
     @classmethod
     def import_config(cls, name, path=None, type_=None):
-        level = 0
-        if name.startswith('.'):
-            if not path:
-                path = os.getcwd()
-            for character in name:
-                if character != '.':
-                    break
-                level += 1
+        level, path = cls.__level_parse(name, path)
         return cls.__config_import(name[level:], path, level, type_)
 
     @classmethod
     def export_config(cls, config, name, path=None, type_=None):
-        level = 0
-        if name.startswith('.'):
-            if not path:
-                path = os.getcwd()
-            for character in name:
-                if character != '.':
-                    break
-                level += 1
+        level, path = cls.__level_parse(name, path)
         return cls.__config_export(config, name[level:], path, level, type_)
 
     @classmethod
@@ -71,15 +57,10 @@ class ConfigManager:
 
     @classmethod
     def __config_import(cls, name, path, level=0, type_=None):
-        cls.__sanity_check(name, path, level)
-        base, _, name_base = name.rpartition('.')
-        base = base.replace('.', '/')
         for c_path in chain([path], sys.path):
             try:
                 if c_path:
-                    cls.__sanity_check(name, c_path, level)
-                    c_path = Path(c_path)
-                    c_path = (c_path.parent if level == 2 else c_path) / base
+                    name_base, c_path = cls.__parse_path(name, c_path, level)
                     return cls.__load_config(name_base, c_path, type_)
             except (FileNotFoundError, PermissionError):
                 pass
@@ -88,11 +69,7 @@ class ConfigManager:
 
     @classmethod
     def __config_export(cls, config, name, path=None, level=0, type_=None):
-        cls.__sanity_check(name, path, level)
-        base, _, name_base = name.rpartition('.')
-        base = base.replace('.', '/')
-        c_path = Path(path or os.getcwd())
-        c_path = (c_path.parent if level == 2 else c_path) / base
+        name_base, c_path = cls.__parse_path(name, path or os.getcwd(), level)
         return cls.export_config_file(config, name_base, c_path, type_)
 
     @classmethod
@@ -126,6 +103,15 @@ class ConfigManager:
         else:
             raise FileNotFoundError
 
+    @classmethod
+    def __parse_path(cls, name, path, level):
+        cls.__sanity_check(name, path, level)
+        base, _, name_base = name.rpartition('.')
+        base = base.replace('.', '/')
+        c_path = Path(path)
+        c_path = (c_path.parent if level == 2 else c_path) / base
+        return name_base, c_path
+
     @staticmethod
     def __sanity_check(name, path, level):
         """Verify arguments are "sane"."""
@@ -146,3 +132,15 @@ class ConfigManager:
     @staticmethod
     def __get_config_path(config_name, path, type_=None):
         return Path(path) / (config_name + f'.{type_}' if type_ else '')
+
+    @staticmethod
+    def __level_parse(name, path=None):
+        level = 0
+        if name.startswith('.'):
+            if not path:
+                path = os.getcwd()
+            for character in name:
+                if character != '.':
+                    break
+                level += 1
+        return level, path
