@@ -5,4 +5,4 @@ from configDmanager._configmanager import ConfigManager
 import_config = ConfigManager.import_config
 
 
-__version__ = '0.1.9'
+__version__ = '0.2.0'
