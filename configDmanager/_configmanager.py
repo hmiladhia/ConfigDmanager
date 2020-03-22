@@ -26,8 +26,10 @@ class ConfigManager:
         config, name_base, c_path = cls.__config_import(name[level:], path, level, type_)
         if isinstance(mod, dict) or isinstance(mod, Config):
             config.update(mod)
-        if callable(mod):
+        elif callable(mod):
             config.update(mod(config))
+        else:
+            raise ValueError('mod must be a dict, Config or a callable that returns a dict or a Config')
         cls.export_config(config, name_base, c_path, type_)
         return config
 
@@ -40,7 +42,11 @@ class ConfigManager:
     def export_config_file(cls, obj, config_name=None, path=None, type_=None, **kwargs):
         config_dict = obj.to_dict()
         config_dict['__name'] = config_name
+        parent_type = obj.get('__parent.__type', None)
+        if parent_type:
+            config_dict['__parent_type'] = parent_type
         type_ = type_ or config_dict.get('__type', cls.default_export_type)
+        config_dict['__type'] = type_
         config_path = cls.__get_config_path(config_name if config_name else obj.get_name() or obj.__name__, path, type_)
         with open(config_path, 'w') as config_file:
             cls.supported_types[type_].export_config(config_dict, config_file, **kwargs)

@@ -1,4 +1,5 @@
 {
   "__name": "ExportConfig",
-  "val": 19
+  "val": 19,
+  "__type": "json"
 }
