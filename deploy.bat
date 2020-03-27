@@ -1,29 +1,26 @@
 @echo off
-CALL activate configEnv
 
-call :TESTS
-IF "%errorlevel%"=="0" CALL :DEPLOY %1
+CALL :TESTS && CALL :DEPLOY %1
 
-CALL conda deactivate
 PAUSE > nul
 GOTO :EOF
 
 
 :TESTS
 SET PYTHONPATH=%cd%
-cd tests
+CD tests
 SET pass=123456
 python -m pytest
 SET test_result=%errorlevel%
-cd ..
+CD ..
 EXIT /B %test_result%
 
 :DEPLOY
-set env=%1
+SET env=%1
 
-IF "%env%"=="" set /p env=(Test/Production)?
-IF /I "%env%"=="Test" call :DEPLOY_TEST_PYPI
-IF /I "%env%"=="Production" call :DEPLOY_PYPI
+IF "%env%"=="" SET /p env=(Test/Production)?
+IF /I "%env%"=="Test" CALL :DEPLOY_TEST_PYPI
+IF /I "%env%"=="Production" CALL :DEPLOY_PYPI
 GOTO :EOF
 
 
